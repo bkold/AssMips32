@@ -24,10 +24,55 @@ static const int offsetVal=268500992;
 
 string decimalToBinary(int decimal) {
   string binary="";
+  int isNeg=0;
+  int t=0;
+  if(decimal<0){
+      isNeg=1;
+      decimal=decimal-(2*decimal);
+  }
+  if(decimal==0){
+      binary="0000000000000000";
+  }
   while(decimal)  {
+      t=1;
       binary.insert(0, 1, (decimal & 1) + '0');
       decimal >>= 1;
   }
+
+  if(isNeg==1){
+      int i=0;
+      while(i<binary.length()){
+          if(binary[i]=='0'){
+            binary[i]='1';
+          }else{
+            binary[i]='0';
+          }
+        ++i;
+      }
+      //add 1
+      int x=binary.find_last_of('0');
+      while(x<binary.length()){
+        if(binary[x]=='0'){
+            binary[x]='1';
+          }else{
+            binary[x]='0';
+          }
+          ++x;
+      }
+      int length=binary.length();
+      while(length<16){
+        binary="1"+binary;
+        length=binary.length();
+      }
+
+  }else{
+        int length=binary.length();
+        while(length<16){
+            binary="0"+binary;
+            length=binary.length();
+        }
+  }
+
 
   return binary;
 }
@@ -47,69 +92,69 @@ void pMemory(){
 //returns the binary string of the register number
 string getRegNum(string reg){
     string ret="";
-    if(reg.compare("$0")==0 || reg.compare("$zero")){
+    if(reg.compare("$0")==0 || reg.compare("$zero")==0){
         ret="00000";
-    }else if(reg.compare("$1")==0 || reg.compare("$at")){
+    }else if(reg.compare("$1")==0 || reg.compare("$at")==0){
         ret="00001";
-    }else if(reg.compare("$2")==0 || reg.compare("$v0")){
+    }else if(reg.compare("$2")==0 || reg.compare("$v0")==0){
         ret="00010";
-    }else if(reg.compare("$3")==0 || reg.compare("$v1")){
+    }else if(reg.compare("$3")==0 || reg.compare("$v1")==0){
         ret="00011";
-    }else if(reg.compare("$4")==0 || reg.compare("$a0")){
+    }else if(reg.compare("$4")==0 || reg.compare("$a0")==0){
         ret="00100";
-    }else if(reg.compare("$5")==0 || reg.compare("$a1")){
+    }else if(reg.compare("$5")==0 || reg.compare("$a1")==0){
         ret="00101";
-    }else if(reg.compare("$6")==0 || reg.compare("$a2")){
+    }else if(reg.compare("$6")==0 || reg.compare("$a2")==0){
         ret="00110";
-    }else if(reg.compare("$7")==0 || reg.compare("$a3")){
+    }else if(reg.compare("$7")==0 || reg.compare("$a3")==0){
         ret="00111";
-    }else if(reg.compare("$8")==0 || reg.compare("$t0")){
+    }else if(reg.compare("$8")==0 || reg.compare("$t0")==0){
         ret="01000";
-    }else if(reg.compare("$9")==0 || reg.compare("$t1")){
+    }else if(reg.compare("$9")==0 || reg.compare("$t1")==0){
         ret="01001";
-    }else if(reg.compare("$10")==0 || reg.compare("$t2")){
+    }else if(reg.compare("$10")==0 || reg.compare("$t2")==0){
         ret="01010";
-    }else if(reg.compare("$11")==0 || reg.compare("$t3")){
+    }else if(reg.compare("$11")==0 || reg.compare("$t3")==0){
         ret="01011";
-    }else if(reg.compare("$12")==0 || reg.compare("$t4")){
+    }else if(reg.compare("$12")==0 || reg.compare("$t4")==0){
         ret="01100";
-    }else if(reg.compare("$13")==0 || reg.compare("$t5")){
+    }else if(reg.compare("$13")==0 || reg.compare("$t5")==0){
         ret="01101";
-    }else if(reg.compare("$14")==0 || reg.compare("$t6")){
+    }else if(reg.compare("$14")==0 || reg.compare("$t6")==0){
         ret="01110";
-    }else if(reg.compare("$15")==0 || reg.compare("$t7")){
+    }else if(reg.compare("$15")==0 || reg.compare("$t7")==0){
         ret="01111";
-    }else if(reg.compare("$16")==0 || reg.compare("$s0")){
+    }else if(reg.compare("$16")==0 || reg.compare("$s0")==0){
         ret="10000";
-    }else if(reg.compare("$17")==0 || reg.compare("$s1")){
+    }else if(reg.compare("$17")==0 || reg.compare("$s1")==0){
         ret="10001";
-    }else if(reg.compare("$18")==0 || reg.compare("$s2")){
+    }else if(reg.compare("$18")==0 || reg.compare("$s2")==0){
         ret="10010";
-    }else if(reg.compare("$19")==0 || reg.compare("$s3")){
+    }else if(reg.compare("$19")==0 || reg.compare("$s3")==0){
         ret="10011";
-    }else if(reg.compare("$20")==0 || reg.compare("$s4")){
+    }else if(reg.compare("$20")==0 || reg.compare("$s4")==0){
         ret="10100";
-    }else if(reg.compare("$21")==0 || reg.compare("$s5")){
+    }else if(reg.compare("$21")==0 || reg.compare("$s5")==0){
         ret="10101";
-    }else if(reg.compare("$22")==0 || reg.compare("$s6")){
+    }else if(reg.compare("$22")==0 || reg.compare("$s6")==0){
         ret="10110";
-    }else if(reg.compare("$23")==0 || reg.compare("$s7")){
+    }else if(reg.compare("$23")==0 || reg.compare("$s7")==0){
         ret="10111";
-    }else if(reg.compare("$24")==0 || reg.compare("$t8")){
+    }else if(reg.compare("$24")==0 || reg.compare("$t8")==0){
         ret="11000";
-    }else if(reg.compare("$25")==0 || reg.compare("$t9")){
+    }else if(reg.compare("$25")==0 || reg.compare("$t9")==0){
         ret="11001";
-    }else if(reg.compare("$26")==0 || reg.compare("$k0")){
+    }else if(reg.compare("$26")==0 || reg.compare("$k0")==0){
         ret="11010";
-    }else if(reg.compare("$27")==0 || reg.compare("$k1")){
+    }else if(reg.compare("$27")==0 || reg.compare("$k1")==0){
         ret="11011";
-    }else if(reg.compare("$28")==0 || reg.compare("$gp")){
+    }else if(reg.compare("$28")==0 || reg.compare("$gp")==0){
         ret="11100";
-    }else if(reg.compare("$29")==0 || reg.compare("$sp")){
+    }else if(reg.compare("$29")==0 || reg.compare("$sp")==0){
         ret="11101";
-    }else if(reg.compare("$30")==0 || reg.compare("$s8")){
+    }else if(reg.compare("$30")==0 || reg.compare("$s8")==0){
         ret="11110";
-    }else if(reg.compare("$31")==0 || reg.compare("$ra")){
+    }else if(reg.compare("$31")==0 || reg.compare("$ra")==0){
         ret="11111";
     }else{
         //error not a useable register
@@ -173,7 +218,11 @@ string regFormat(string line){
     string rtb=getRegNum(rt);
     string offsetb=decimalToBinary(off);
 
-    string temp=baseb+rtb+offsetb;
+    string temp="";
+    //temp=temp+baseb+rtb+offsetb;
+    temp.append(baseb);
+    temp.append(rtb);
+    temp.append(offsetb);
     return temp;
 
 }
@@ -191,83 +240,106 @@ void getInstruction(string line){
         */
 
     if(instruction.compare("add")==0){
-        binLine="000000"+rFormat(line)+"00000100000";
+        binLine="000000";
+        binLine.append(rFormat(line));
+        binLine.append("00000100000");
     }else if(instruction.compare("addi")==0){
-        binLine="001000"+iFormat(line);
+        binLine="001000";
+        binLine.append(iFormat(line));
     }else if(instruction.compare("and")==0){
-        binLine="000000"+rFormat(line)+"00000100100";
+        binLine="000000";
+        binLine.append(rFormat(line));
+        binLine.append("00000100100");
     }else if(instruction.compare("andi")==0){
-        binLine="001100"+iFormat(line);
+        binLine="001100";
+        binLine.append(iFormat(line));
     }else if(instruction.compare("beq")==0){
-        binLine="000100"+iFormat(line);
+        binLine="000100";
+        binLine.append(iFormat(line));
     }else if(instruction.compare("bne")==0){
-        binLine="000101"+iFormat(line);
+        binLine="000101";
+        binLine.append(iFormat(line));
     }else if(instruction.compare("div")==0){
 /////////this is special must do manually
 //delete the next line
-binLine="10101010101010101010101010101010";
+binLine="00000000000000000000000000000000";//0
     }else if(instruction.compare("j")==0){
-        binLine="000010"+jFormat(line);
+        binLine="000010";
+        binLine.append(jFormat(line));
     }else if(instruction.compare("jal")==0){
-        binLine="000011"+jFormat(line);
+        binLine="000011";
+        binLine.append(jFormat(line));
     }else if(instruction.compare("jr")==0){
 //////////this is special must do manually
 //delete the next line
-binLine="10101010101010101010101010101010";
+binLine="00000000000000000000000000000001";//1
     }else if(instruction.compare("lui")==0){
 //////////this is special must do manually
 //delete the next line
-binLine="10101010101010101010101010101010";
+binLine="00000000000000000000000000000010";//2
     }else if(instruction.compare("lw")==0){
-        binLine="100011"+regFormat(line);
+        binLine="100011";
+        binLine.append(regFormat(line));
     }else if(instruction.compare("mfhi")==0){
 //////////this is special must do manually
 //        string rd;
         //get rd
 //        binLine="0000000000000000"+rd+"00000010000";
 //delete the next line
-binLine="10101010101010101010101010101010";
+binLine="00000000000000000000000000000011";//3
     }else if(instruction.compare("mflo")==0){
 //////////this is special must do manually
 //        string rd;
         //get rd
 //        binLine="0000000000000000"+rd+"00000010010";
 //delete the next line
-binLine="10101010101010101010101010101010";
+binLine="00000000000000000000000000000100";//4
     }else if(instruction.compare("mul")==0){
-        binLine="011100"+rFormat(line)+"00000000010";
+        binLine="011100";
+        binLine.append(rFormat(line));
+        binLine.append("00000000010");
     }else if(instruction.compare("nor")==0){
-        binLine="000000"+rFormat(line)+"00000100111";
+        binLine="000000";
+        binLine.append(rFormat(line));
+        binLine.append("00000100111");
     }else if(instruction.compare("or")==0){
-        binLine="000000"+rFormat(line)+"00000100101";
+        binLine="000000";
+        binLine.append(rFormat(line));
+        binLine.append("00000100101");
     }else if(instruction.compare("ori")==0){
-        binLine="001101"+iFormat(line);
+        binLine="001101";
+        binLine.append(iFormat(line));
     }else if(instruction.compare("sll")==0){
 //////////this is special must do manually
 //delete the next line
-binLine="10101010101010101010101010101010";
+binLine="00000000000000000000000000000101";//5
     }else if(instruction.compare("slt")==0){
-        binLine="000000"+rFormat(line)+"00000101010";
+        binLine="000000";
+        binLine.append(rFormat(line));
+        binLine.append("00000101010");
     }else if(instruction.compare("sra")==0){
 //////////this is special must do manually
 //delete the next line
-binLine="10101010101010101010101010101010";
+binLine="00000000000000000000000000000110";//6
     }else if(instruction.compare("srl")==0){
 //////////this is special must do manually
 //delete the next line
-binLine="10101010101010101010101010101010";
+binLine="00000000000000000000000000000111";//7
     }else if(instruction.compare("sub")==0){
-        binLine="000000"+rFormat(line)+"00000100010";
+        binLine="000000";
+        binLine.append(rFormat(line));
+        binLine.append("00000100010");
     }else if(instruction.compare("sw")==0){
-        binLine="101011"+regFormat(line);
+        binLine="101011";
+        binLine.append(regFormat(line));
     }else if(instruction.compare("syscall")==0){
 //////////this is special must do manually
         //binLine="000000"+code+"001100";
 //delete the next line
-binLine="10101010101010101010101010101010";
+binLine="00000000000000000000000000001000";//8
     }else{
     //error, instruction not supported
-    binLine="11101110111011101110111011101110";
+    binLine="00000000000000000000000000001001";//9
     }
     //convert the binLine to hex and print it to the file
     string hexLine="";
@@ -279,21 +351,21 @@ binLine="10101010101010101010101010101010";
         }
         int num=atoi(temp.c_str());
         switch(num){
-            case 0000: hexLine=hexLine+"0";
+            case 0: hexLine=hexLine+"0";
             break;
-            case 0001: hexLine=hexLine+"1";
+            case 1: hexLine=hexLine+"1";
             break;
-            case 0010: hexLine=hexLine+"2";
+            case 10: hexLine=hexLine+"2";
             break;
-            case 0011: hexLine=hexLine+"3";
+            case 11: hexLine=hexLine+"3";
             break;
-            case 0100: hexLine=hexLine+"4";
+            case 100: hexLine=hexLine+"4";
             break;
-            case 0101: hexLine=hexLine+"5";
+            case 101: hexLine=hexLine+"5";
             break;
-            case 0110: hexLine=hexLine+"6";
+            case 110: hexLine=hexLine+"6";
             break;
-            case 0111: hexLine=hexLine+"7";
+            case 111: hexLine=hexLine+"7";
             break;
             case 1000: hexLine=hexLine+"8";
             break;
@@ -314,7 +386,7 @@ binLine="10101010101010101010101010101010";
         }
         count+=4;
     }
-    cout<<hexLine<<endl;
+    cout<<hexLine<<endl; //delete this when done
     outFile<<hexLine<<endl;
 
 }
@@ -466,14 +538,14 @@ int main (int argc, const char *argv[])
             if(buff[0]=='#' || buff[0]=='\0'){
 
             }else{
-                //outFile<<buff<<endl;
                 if(buff.compare(".data")==0){
                     status=1;
                 }else
                 if(buff.compare(".text")==0){
                     status=2;
+                    pMemory();
                     pfData();//print data part of file
-                    outFile<<endl;
+                    outFile<<endl<<"01"<<endl;
                 }else
                 if(status==1){
                     sendToMemory(buff);
