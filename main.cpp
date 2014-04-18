@@ -19,8 +19,15 @@ ifstream inFile;
 ofstream outFile;
 static string memStore[1028];
 static string memValues[1028];
-static int memLocation=0;
+static string instructionStore[1028];       //hex for an instruction
+static int instructionMemAdd[1028];         //address in memory for an instruction
+static string branchStore[256];
+static int brancMemAdd[256];
+static int branchLocation=0;
+static int memLocation=0;                   //pointer for the mem arrays
+static int instructionLocation=0;           //pointer for the instruction arrays
 static const int offsetVal=268500992;
+static const int instructionVal=4194304;    //mem address of the text section
 
 string decimalToBinary(int decimal) {
   string binary="";
@@ -152,7 +159,7 @@ string getRegNum(string reg){
         ret="11100";
     }else if(reg.compare("$29")==0 || reg.compare("$sp")==0){
         ret="11101";
-    }else if(reg.compare("$30")==0 || reg.compare("$s8")==0){
+    }else if(reg.compare("$30")==0 || reg.compare("$s8")==0 || reg.compare("$fp")==0){
         ret="11110";
     }else if(reg.compare("$31")==0 || reg.compare("$ra")==0){
         ret="11111";
@@ -201,6 +208,20 @@ string jFormat(string line){
         string imm=line.substr(0, line.find(' '));
         int immed=atoi(imm.c_str());
         string immb=decimalToBinary(immed);
+        int length=immb.length();
+        if(immb[0]=='0'){
+            while(length<26){
+                immb="0"+immb;
+                length=immb.length();
+            }
+        }
+        if(immb[0]=='1'){
+            while(length<26){
+                immb="0"+immb;
+                length=immb.length();
+            }
+        }
+
 
         return immb;
 }
@@ -229,6 +250,7 @@ string regFormat(string line){
 
 //function to parse the instruction line to oct and then print to file
 void getInstruction(string line){
+
     string instruction=line.substr(0, line.find(' '));
     line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
     string binLine="";
@@ -371,17 +393,17 @@ binLine="00000000000000000000000000001000";//8
             break;
             case 1001: hexLine=hexLine+"9";
             break;
-            case 1010: hexLine=hexLine+"A";
+            case 1010: hexLine=hexLine+"a";
             break;
-            case 1011: hexLine=hexLine+"B";
+            case 1011: hexLine=hexLine+"b";
             break;
-            case 1100: hexLine=hexLine+"C";
+            case 1100: hexLine=hexLine+"c";
             break;
-            case 1101: hexLine=hexLine+"D";
+            case 1101: hexLine=hexLine+"d";
             break;
-            case 1110: hexLine=hexLine+"E";
+            case 1110: hexLine=hexLine+"e";
             break;
-            case 1111: hexLine=hexLine+"F";
+            case 1111: hexLine=hexLine+"f";
             break;
         }
         count+=4;
@@ -389,11 +411,27 @@ binLine="00000000000000000000000000001000";//8
     cout<<hexLine<<endl; //delete this when done
     outFile<<hexLine<<endl;
 
+
+
+
+}
+
+//print the text section of the o file
+void pfText(){
+    //print the memory address
+    outFile<<"00400000"<<endl;
+
+    //get length
+    int j=0;
+    int len=instructionLocation*8+20;
+
+    outFile << setfill ('0') << std::setw (8); //print the memory address
+    outFile<<hex<<len<<endl;
 }
 
 //print the data sectio of the o file
 void pfData(){
-    outFile<<"4D49505333326F\n";//print the arbitrary number
+    outFile<<"4d49505333326f\n";//print the arbitrary number
     outFile<<"00\n";//start the data section
     outFile<<hex<<offsetVal<<endl;//print the memory data value
     int j=0;
@@ -450,6 +488,19 @@ void pfData(){
         ++j;
     }
 
+}
+
+//send the text section to an array and the branch tags with appropriate addresses
+void textToMemory(string line){
+    if(line[line.length()-1!=':']){
+        instructionStore[instructionLocation]=line;
+        instructionMemAdd[instructionLocation]=instructionVal+instructionLocation*4;
+        instructionLocation++;
+    }else{
+        branchStore[branchLocation]=line;
+        brancMemAdd[branchLocation]=instructionLocation*4+instructionVal;
+        branchLocation++;
+    }
 }
 
 //fuction to store the values into "memory"
@@ -519,7 +570,6 @@ void sendToMemory(string line){
     }
 }
 
-
 int main (int argc, const char *argv[])
 {
     string buff;
@@ -551,16 +601,24 @@ int main (int argc, const char *argv[])
                     sendToMemory(buff);
                 }else
                 if(status==2){
-                    getInstruction(buff);
-                }
+                    textToMemory(buff);
+                }else{}
+
             }
         }
+        pfText();
+        int j=0;
+        while(j<instructionLocation){
+            getInstruction(instructionStore[j]);
+            ++j;
+        }
+
     }else{
         cout<<"source NOT opened\n";
 
     }
 
-    pMemory();
+
 
     outFile.close();
     inFile.close();
