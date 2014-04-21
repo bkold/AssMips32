@@ -9,25 +9,25 @@
 0141
 0E4920616D206120737472696E670A
 01
-00400000
-000000B4
-3C011001
-34290000
-8D280000
-21080001
-AD280000
-24020004
-3C011001
-3424000F
-0000000C
-0C10000C
-2402000A
-0000000C
-23BDFFF8
-AFBF0004
-AFBE0000
-23BE0004
-8FDFFFFC
-8FDFFFF8
-23BD0008
-03E00008
+00400000	//memaddress
+000000B4	//length
+3C011001	//la $t1, a # $t1 = addr of a
+34290000	//--
+8D280000	//lw $t0, 0($t1) # $t0 = a
+21080001	//addi $t0, $t0, 1 # $t0 = a + 1
+AD280000	//sw $t0, 0($t1) # ++a
+24020004	//li $v0, 4 # $v0 = PrintString service code
+3C011001	//la $a0, s3 # $a0 = addr of string s3
+3424000F	//--
+0000000C	//syscall # PrintString("I am a string\n")
+0C10000C	//jal foo # foo()
+2402000A	//li $v0, 10 # $v0 = Exit service code
+0000000C	//syscall # Exit()
+23BDFFF8	//addi $sp, $sp, -8
+AFBF0004	//sw $ra, 4($sp)
+AFBE0000	//sw $fp, 0($sp)
+23BE0004	//addi $fp, $sp, 4
+8FDFFFFC	//lw $ra, -4($fp)
+8FDFFFF8	//lw $ra, -8($fp)
+23BD0008	//addi $sp, $sp, 8
+03E00008	//jr $ra

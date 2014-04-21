@@ -17,16 +17,16 @@ using namespace std;
 
 ifstream inFile;
 ofstream outFile;
-static string memStore[1028];
-static string memValues[1028];
-static string instructionStore[1028];       //hex for an instruction
+static string memStore[1028];               //var type and name
+static string memValues[1028];              //val value
+static string instructionStore[1028];       //full instruction line
 static int instructionMemAdd[1028];         //address in memory for an instruction
-static string branchStore[256];
-static int brancMemAdd[256];
-static int branchLocation=0;
+static string branchStore[256];             //branch label
+static int brancMemAdd[256];                //branch mem address
+static int branchLocation=0;                //pointer for the branch array
 static int memLocation=0;                   //pointer for the mem arrays
 static int instructionLocation=0;           //pointer for the instruction arrays
-static const int offsetVal=268500992;
+static const int offsetVal=268500992;       //mem address for the data section
 static const int instructionVal=4194304;    //mem address of the text section
 
 string decimalToBinary(int decimal) {
@@ -82,6 +82,78 @@ string decimalToBinary(int decimal) {
 
 
   return binary;
+}
+
+//convert the binLine to hex and print it to the file
+void binLineToHex(string binLine){
+
+    string hexLine="";
+    int count=0;
+    for(int i=0; i<8; ++i){
+        string temp="";
+        for(int j=count; j<count+4; ++j){
+            temp+=binLine[j];
+        }
+        int num=atoi(temp.c_str());
+        switch(num){
+            case 0: hexLine=hexLine+"0";
+            break;
+            case 1: hexLine=hexLine+"1";
+            break;
+            case 10: hexLine=hexLine+"2";
+            break;
+            case 11: hexLine=hexLine+"3";
+            break;
+            case 100: hexLine=hexLine+"4";
+            break;
+            case 101: hexLine=hexLine+"5";
+            break;
+            case 110: hexLine=hexLine+"6";
+            break;
+            case 111: hexLine=hexLine+"7";
+            break;
+            case 1000: hexLine=hexLine+"8";
+            break;
+            case 1001: hexLine=hexLine+"9";
+            break;
+            case 1010: hexLine=hexLine+"a";
+            break;
+            case 1011: hexLine=hexLine+"b";
+            break;
+            case 1100: hexLine=hexLine+"c";
+            break;
+            case 1101: hexLine=hexLine+"d";
+            break;
+            case 1110: hexLine=hexLine+"e";
+            break;
+            case 1111: hexLine=hexLine+"f";
+            break;
+        }
+        count+=4;
+    }
+    cout<<hexLine<<endl; //delete this when done
+    outFile<<hexLine<<endl;
+}
+//prints the structure of the "text", first col is the postion, second is the line, third is the memory address pointer
+void pText(){
+    cout<<"------text-------\n";
+    int j=0;
+    while(j<instructionLocation){
+        cout<<j<<"\t"<<instructionStore[j];
+        cout<<'\t'<<'\t'<<'\t'<<'\t';
+        cout<<instructionMemAdd[j];
+        ++j;
+        cout<<"\n";
+    }
+    cout<<"------branches-------\n";
+    j=0;
+    while(j<branchLocation){
+        cout<<j<<"\t"<<branchStore[j];
+        cout<<'\t'<<'\t';
+        cout<<brancMemAdd[j];
+        ++j;
+        cout<<"\n";
+    }
 }
 
 //prints the structure of the "memory", first col is the postion, second is the pointer, third is the value in dec/latin
@@ -248,46 +320,75 @@ string regFormat(string line){
 
 }
 
+//for shift instructions
+string shiftFormat(string line){
+    string rd=line.substr(0, line.find(','));
+    line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
+    string rt=line.substr(0, line.find(','));
+    line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
+    string sa=line.substr(0, line.find(' ')-1);
+
+    string rdb=getRegNum(rd);
+    string rtb=getRegNum(rt);
+    string sab=getRegNum(sa);
+    string temp="";
+    temp.append(rtb);
+    temp.append(rdb);
+    temp.append(sab);
+    return temp;
+}
+
 //function to parse the instruction line to oct and then print to file
 void getInstruction(string line){
 
     string instruction=line.substr(0, line.find(' '));
     line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
     string binLine="";
-        //todo
-        //determine the format for each instr manually
-        //done
-
-        /*
-        */
 
     if(instruction.compare("add")==0){
         binLine="000000";
         binLine.append(rFormat(line));
         binLine.append("00000100000");
+        binLineToHex(binLine);
     }else if(instruction.compare("addi")==0){
         binLine="001000";
         binLine.append(iFormat(line));
+        binLineToHex(binLine);
     }else if(instruction.compare("and")==0){
         binLine="000000";
         binLine.append(rFormat(line));
         binLine.append("00000100100");
+        binLineToHex(binLine);
     }else if(instruction.compare("andi")==0){
         binLine="001100";
         binLine.append(iFormat(line));
+        binLineToHex(binLine);
     }else if(instruction.compare("beq")==0){
         binLine="000100";
         binLine.append(iFormat(line));
+        binLineToHex(binLine);
     }else if(instruction.compare("bne")==0){
         binLine="000101";
         binLine.append(iFormat(line));
+        binLineToHex(binLine);
     }else if(instruction.compare("div")==0){
-/////////this is special must do manually
-//delete the next line
-binLine="00000000000000000000000000000000";//0
+        string rs=line.substr(0, line.find(','));
+        line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
+        string rt=line.substr(0, line.find(' ')-1);
+
+        string rsb=getRegNum(rs);
+        string rtb=getRegNum(rt);
+        string temp="";
+        temp=rsb+rtb;
+
+        binLine="000000";
+        binLine.append(temp);
+        binLine.append("0000000000011010");
+        binLineToHex(binLine);
     }else if(instruction.compare("j")==0){
         binLine="000010";
         binLine.append(jFormat(line));
+        binLineToHex(binLine);
     }else if(instruction.compare("jal")==0){
         binLine="000011";
         binLine.append(jFormat(line));
@@ -295,124 +396,119 @@ binLine="00000000000000000000000000000000";//0
 //////////this is special must do manually
 //delete the next line
 binLine="00000000000000000000000000000001";//1
+binLineToHex(binLine);
+    }else if(instruction.compare("la")==0){
+        //pseudo code instruction
+        //la $rs, big--big is the address of the variable
+        //lui then ori
+        //lui $at, upper( big )
+        //ori $rs, $at, lower( big )
+        string test1="lui $ra, $sp, 4";
+        string test2="ori $ra, -4($fp)";
+        getInstruction(test1);
+        getInstruction(test2);
+    //binLine="00000000000000000000000000000010";//2
+    }else if(instruction.compare("li")==0){
+        //pseudo code instruction
+        //determine the size of imm
+        //if a is small
+        //addi $rt, $rs, imm
+        //else
+        //lui $at, upper( imm )
+        //ori $rs, $at, lower( imm )
+    binLine="00000000000000000000000000000011";//3
+    binLineToHex(binLine);
     }else if(instruction.compare("lui")==0){
-//////////this is special must do manually
-//delete the next line
-binLine="00000000000000000000000000000010";//2
+        string rt=line.substr(0, line.find(','));
+        line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
+        string imm=line.substr(0, line.find(' ')-1);
+
+        string rtb=getRegNum(rt);
+        int immed=atoi(imm.c_str());
+        string immb=decimalToBinary(immed);
+        string temp="";
+        temp=rtb+immb;
+
+        binLine="00111100000";
+        binLine.append(temp);
+        binLineToHex(binLine);
     }else if(instruction.compare("lw")==0){
         binLine="100011";
         binLine.append(regFormat(line));
+        binLineToHex(binLine);
     }else if(instruction.compare("mfhi")==0){
-//////////this is special must do manually
-//        string rd;
-        //get rd
-//        binLine="0000000000000000"+rd+"00000010000";
-//delete the next line
-binLine="00000000000000000000000000000011";//3
+        string rd=line.substr(0, line.find(' ')-1);
+        string rdb=getRegNum(rd);
+        binLine="0000000000000000";
+        binLine.append(rdb);
+        binLine.append("00000010000");
+        binLineToHex(binLine);
     }else if(instruction.compare("mflo")==0){
-//////////this is special must do manually
-//        string rd;
-        //get rd
-//        binLine="0000000000000000"+rd+"00000010010";
-//delete the next line
-binLine="00000000000000000000000000000100";//4
+        string rd=line.substr(0, line.find(' ')-1);
+        string rdb=getRegNum(rd);
+        binLine="0000000000000000";
+        binLine.append(rdb);
+        binLine.append("00000010010");
+        binLineToHex(binLine);
     }else if(instruction.compare("mul")==0){
         binLine="011100";
         binLine.append(rFormat(line));
         binLine.append("00000000010");
+        binLineToHex(binLine);
     }else if(instruction.compare("nor")==0){
         binLine="000000";
         binLine.append(rFormat(line));
         binLine.append("00000100111");
+        binLineToHex(binLine);
     }else if(instruction.compare("or")==0){
         binLine="000000";
         binLine.append(rFormat(line));
         binLine.append("00000100101");
+        binLineToHex(binLine);
     }else if(instruction.compare("ori")==0){
         binLine="001101";
         binLine.append(iFormat(line));
+        binLineToHex(binLine);
     }else if(instruction.compare("sll")==0){
-//////////this is special must do manually
-//delete the next line
-binLine="00000000000000000000000000000101";//5
+        binLine="00000000000";
+        binLine.append(shiftFormat(line));
+        binLine.append("000000");
+        binLineToHex(binLine);
     }else if(instruction.compare("slt")==0){
         binLine="000000";
         binLine.append(rFormat(line));
         binLine.append("00000101010");
+        binLineToHex(binLine);
     }else if(instruction.compare("sra")==0){
-//////////this is special must do manually
-//delete the next line
-binLine="00000000000000000000000000000110";//6
+        binLine="00000000000";
+        binLine.append(shiftFormat(line));
+        binLine.append("000011");
+        binLineToHex(binLine);
     }else if(instruction.compare("srl")==0){
-//////////this is special must do manually
-//delete the next line
-binLine="00000000000000000000000000000111";//7
+        binLine="00000000000";
+        binLine.append(shiftFormat(line));
+        binLine.append("000010");
+        binLineToHex(binLine);
     }else if(instruction.compare("sub")==0){
         binLine="000000";
         binLine.append(rFormat(line));
         binLine.append("00000100010");
+        binLineToHex(binLine);
     }else if(instruction.compare("sw")==0){
         binLine="101011";
         binLine.append(regFormat(line));
+        binLineToHex(binLine);
     }else if(instruction.compare("syscall")==0){
 //////////this is special must do manually
         //binLine="000000"+code+"001100";
 //delete the next line
 binLine="00000000000000000000000000001000";//8
+binLineToHex(binLine);
     }else{
     //error, instruction not supported
     binLine="00000000000000000000000000001001";//9
+    binLineToHex(binLine);
     }
-    //convert the binLine to hex and print it to the file
-    string hexLine="";
-    int count=0;
-    for(int i=0; i<8; ++i){
-        string temp="";
-        for(int j=count; j<count+4; ++j){
-            temp+=binLine[j];
-        }
-        int num=atoi(temp.c_str());
-        switch(num){
-            case 0: hexLine=hexLine+"0";
-            break;
-            case 1: hexLine=hexLine+"1";
-            break;
-            case 10: hexLine=hexLine+"2";
-            break;
-            case 11: hexLine=hexLine+"3";
-            break;
-            case 100: hexLine=hexLine+"4";
-            break;
-            case 101: hexLine=hexLine+"5";
-            break;
-            case 110: hexLine=hexLine+"6";
-            break;
-            case 111: hexLine=hexLine+"7";
-            break;
-            case 1000: hexLine=hexLine+"8";
-            break;
-            case 1001: hexLine=hexLine+"9";
-            break;
-            case 1010: hexLine=hexLine+"a";
-            break;
-            case 1011: hexLine=hexLine+"b";
-            break;
-            case 1100: hexLine=hexLine+"c";
-            break;
-            case 1101: hexLine=hexLine+"d";
-            break;
-            case 1110: hexLine=hexLine+"e";
-            break;
-            case 1111: hexLine=hexLine+"f";
-            break;
-        }
-        count+=4;
-    }
-    cout<<hexLine<<endl; //delete this when done
-    outFile<<hexLine<<endl;
-
-
-
 
 }
 
@@ -492,7 +588,8 @@ void pfData(){
 
 //send the text section to an array and the branch tags with appropriate addresses
 void textToMemory(string line){
-    if(line[line.length()-1!=':']){
+    int test=line.find(':');
+    if(test<0){
         instructionStore[instructionLocation]=line;
         instructionMemAdd[instructionLocation]=instructionVal+instructionLocation*4;
         instructionLocation++;
@@ -504,7 +601,7 @@ void textToMemory(string line){
 }
 
 //fuction to store the values into "memory"
-void sendToMemory(string line){
+void dataToMemory(string line){
     string varName=line.substr(0,line.find(':'));
     line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
     string type=line.substr(line.find('.'), line.find(' ')-line.find('.'));
@@ -580,7 +677,7 @@ int main (int argc, const char *argv[])
     //scanf("%250s", inFileName);
 
     inFile.open(inFileName);
-    outFile.open("foo.o");
+    outFile.open("fooMINE.o");
 
     if(inFile.is_open()){
         cout<<"Sourece opened\n";
@@ -598,7 +695,7 @@ int main (int argc, const char *argv[])
                     outFile<<endl<<"01"<<endl;
                 }else
                 if(status==1){
-                    sendToMemory(buff);
+                    dataToMemory(buff);
                 }else
                 if(status==2){
                     textToMemory(buff);
@@ -606,6 +703,7 @@ int main (int argc, const char *argv[])
 
             }
         }
+        pText();//print text array DELETE THIS
         pfText();
         int j=0;
         while(j<instructionLocation){
