@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string>
 #include <iomanip>
+#include <sstream>
 
 //issues at the moment
 
@@ -21,11 +22,14 @@ static string memStore[1028];               //var type and name
 static string memValues[1028];              //val value
 static string instructionStore[1028];       //full instruction line
 static int instructionMemAdd[1028];         //address in memory for an instruction
+static string instructionHexStore[1028];    //full instruction line(hex)
+static int instructionHexMemAdd[1028];      //address in memory for an instruction(hex)
 static string branchStore[256];             //branch label
 static int brancMemAdd[256];                //branch mem address
 static int branchLocation=0;                //pointer for the branch array
 static int memLocation=0;                   //pointer for the mem arrays
 static int instructionLocation=0;           //pointer for the instruction arrays
+static int instructionHexLocation=0;        //pointer for the instruction arrays
 static int textLength=20;                   //length of
 static const int offsetVal=268500992;       //mem address for the data section
 static const int instructionVal=4194304;    //mem address of the text section
@@ -132,9 +136,11 @@ void binLineToHex(string binLine){
         }
         count+=4;
     }
+    instructionHexStore[instructionHexLocation]=hexLine;
+    instructionHexLocation++;
     cout<<hexLine<<endl; //delete this when done
-    outFile<<hexLine<<endl;
 }
+
 //prints the structure of the "text", first col is the postion, second is the line, third is the memory address pointer
 void pText(){
     cout<<"------text-------\n";
@@ -155,6 +161,8 @@ void pText(){
         ++j;
         cout<<"\n";
     }
+
+
 }
 
 //prints the structure of the "memory", first col is the postion, second is the pointer, third is the value in dec/latin
@@ -414,8 +422,47 @@ textLength+=8;
         //lui then ori
         //lui $at, upper( big )
         //ori $rs, $at, lower( big )
-        string test1="lui $ra, $sp, 4";
-        string test2="ori $ra, -4($fp)";
+
+        string rs=line.substr(0, line.find(','));
+        line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
+        string big=line.substr(0, line.find(' ')-1);
+
+        int j=0;
+        int mem;
+        while(j<memLocation){
+            string s=memStore[j];
+            s=s.substr(1, s.length()-1);
+            if(s.compare(big)){
+                mem=j*4+offsetVal;
+            }
+        }
+
+        stringstream number;
+        number<<hex<<mem;
+        string final(number.str());
+
+        string upper=final.substr(0, 3);
+        string lower=final.substr(4, 7);
+
+        int result1 = 0;
+        int pow = 1;
+        for ( int i = upper.length() - 1; i >= 0; --i, pow <<= 1 )
+            result1 += (upper[i] - '0') * pow;
+
+        int result2 = 0;
+        pow = 1;
+        for ( int i = lower.length() - 1; i >= 0; --i, pow <<= 1 )
+            result2 += (lower[i] - '0') * pow;
+
+        string r1=to_string(result1);
+        string r2=to_string(result2);
+
+        string test1="lui $at, "+r1;
+        string test2="ori ";
+        test2.append(rs);
+        test2.append(",$at ");
+        test2.append(r2);
+
         getInstruction(test1);
         getInstruction(test2);
     //binLine="00000000000000000000000000000010";//2
@@ -506,7 +553,7 @@ textLength+=8;
         binLine.append(shiftFormat(line));
         binLine.append("000011");
         binLineToHex(binLine);
-        v
+        textLength+=8;
     }else if(instruction.compare("srl")==0){
         binLine="00000000000";
         binLine.append(shiftFormat(line));
@@ -523,18 +570,30 @@ textLength+=8;
         binLine="101011";
         binLine.append(regFormat(line));
         binLineToHex(binLine);
+        textLength+=8;
     }else if(instruction.compare("syscall")==0){
 //////////this is special must do manually
         //binLine="000000"+code+"001100";
 //delete the next line
 binLine="00000000000000000000000000001000";//8
 binLineToHex(binLine);
+textLength+=8;
     }else{
-    //error, instruction not supported
-    binLine="00000000000000000000000000001001";//9
-    binLineToHex(binLine);
+        //error, instruction not supported
+        binLine="00000000000000000000000000001001";//9
+        binLineToHex(binLine);
+        textLength+=8;
     }
 
+}
+
+//gets the hex data
+void getHexText(){
+    int j=0;
+    while(j<instructionLocation){
+        getInstruction(instructionStore[j]);
+        ++j;
+    }
 }
 
 //print the text section of the o file
@@ -545,6 +604,12 @@ void pfText(){
     //get length
     outFile << setfill ('0') << std::setw (8); //print the memory address
     outFile<<hex<<textLength<<endl;
+
+    int j=0;
+    while(j<instructionHexLocation){
+        outFile<<instructionHexStore[j]<<endl;
+        j++;
+    }
 }
 
 //print the data sectio of the o file
@@ -725,18 +790,23 @@ int main (int argc, const char *argv[])
 
             }
         }
-        pText();//print text array DELETE THIS
-        pfText();
-        int j=0;
-        while(j<instructionLocation){
-            getInstruction(instructionStore[j]);
-            ++j;
-        }
+
 
     }else{
         cout<<"source NOT opened\n";
 
     }
+
+    getHexText();
+    pText();//print text array DELETE THIS
+    pfText();
+    int j=0;
+    while(j<instructionLocation){
+        getInstruction(instructionStore[j]);
+        ++j;
+    }
+
+    cout<<endl<<endl<<textLength;
 
 
 
