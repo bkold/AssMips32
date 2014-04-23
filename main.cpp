@@ -26,6 +26,7 @@ static int brancMemAdd[256];                //branch mem address
 static int branchLocation=0;                //pointer for the branch array
 static int memLocation=0;                   //pointer for the mem arrays
 static int instructionLocation=0;           //pointer for the instruction arrays
+static int textLength=20;                   //length of
 static const int offsetVal=268500992;       //mem address for the data section
 static const int instructionVal=4194304;    //mem address of the text section
 
@@ -140,8 +141,8 @@ void pText(){
     int j=0;
     while(j<instructionLocation){
         cout<<j<<"\t"<<instructionStore[j];
-        cout<<'\t'<<'\t'<<'\t'<<'\t';
-        cout<<instructionMemAdd[j];
+        cout<<'\t'<<'\t'<<'\t';
+        cout<<hex<<instructionMemAdd[j];
         ++j;
         cout<<"\n";
     }
@@ -350,27 +351,33 @@ void getInstruction(string line){
         binLine.append(rFormat(line));
         binLine.append("00000100000");
         binLineToHex(binLine);
+        textLength+=8;
     }else if(instruction.compare("addi")==0){
         binLine="001000";
         binLine.append(iFormat(line));
         binLineToHex(binLine);
+        textLength+=8;
     }else if(instruction.compare("and")==0){
         binLine="000000";
         binLine.append(rFormat(line));
         binLine.append("00000100100");
         binLineToHex(binLine);
+        textLength+=8;
     }else if(instruction.compare("andi")==0){
         binLine="001100";
         binLine.append(iFormat(line));
         binLineToHex(binLine);
+        textLength+=8;
     }else if(instruction.compare("beq")==0){
         binLine="000100";
         binLine.append(iFormat(line));
         binLineToHex(binLine);
+        textLength+=8;
     }else if(instruction.compare("bne")==0){
         binLine="000101";
         binLine.append(iFormat(line));
         binLineToHex(binLine);
+        textLength+=8;
     }else if(instruction.compare("div")==0){
         string rs=line.substr(0, line.find(','));
         line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
@@ -385,18 +392,22 @@ void getInstruction(string line){
         binLine.append(temp);
         binLine.append("0000000000011010");
         binLineToHex(binLine);
+        textLength+=8;
     }else if(instruction.compare("j")==0){
         binLine="000010";
         binLine.append(jFormat(line));
         binLineToHex(binLine);
+        textLength+=8;
     }else if(instruction.compare("jal")==0){
         binLine="000011";
         binLine.append(jFormat(line));
+        textLength+=8;
     }else if(instruction.compare("jr")==0){
 //////////this is special must do manually
 //delete the next line
 binLine="00000000000000000000000000000001";//1
 binLineToHex(binLine);
+textLength+=8;
     }else if(instruction.compare("la")==0){
         //pseudo code instruction
         //la $rs, big--big is the address of the variable
@@ -418,6 +429,7 @@ binLineToHex(binLine);
         //ori $rs, $at, lower( imm )
     binLine="00000000000000000000000000000011";//3
     binLineToHex(binLine);
+    textLength+=8;
     }else if(instruction.compare("lui")==0){
         string rt=line.substr(0, line.find(','));
         line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
@@ -432,10 +444,12 @@ binLineToHex(binLine);
         binLine="00111100000";
         binLine.append(temp);
         binLineToHex(binLine);
+        textLength+=8;
     }else if(instruction.compare("lw")==0){
         binLine="100011";
         binLine.append(regFormat(line));
         binLineToHex(binLine);
+        textLength+=8;
     }else if(instruction.compare("mfhi")==0){
         string rd=line.substr(0, line.find(' ')-1);
         string rdb=getRegNum(rd);
@@ -443,6 +457,7 @@ binLineToHex(binLine);
         binLine.append(rdb);
         binLine.append("00000010000");
         binLineToHex(binLine);
+        textLength+=8;
     }else if(instruction.compare("mflo")==0){
         string rd=line.substr(0, line.find(' ')-1);
         string rdb=getRegNum(rd);
@@ -450,50 +465,60 @@ binLineToHex(binLine);
         binLine.append(rdb);
         binLine.append("00000010010");
         binLineToHex(binLine);
+        textLength+=8;
     }else if(instruction.compare("mul")==0){
         binLine="011100";
         binLine.append(rFormat(line));
         binLine.append("00000000010");
         binLineToHex(binLine);
+        textLength+=8;
     }else if(instruction.compare("nor")==0){
         binLine="000000";
         binLine.append(rFormat(line));
         binLine.append("00000100111");
         binLineToHex(binLine);
+        textLength+=8;
     }else if(instruction.compare("or")==0){
         binLine="000000";
         binLine.append(rFormat(line));
         binLine.append("00000100101");
         binLineToHex(binLine);
+        textLength+=8;
     }else if(instruction.compare("ori")==0){
         binLine="001101";
         binLine.append(iFormat(line));
         binLineToHex(binLine);
+        textLength+=8;
     }else if(instruction.compare("sll")==0){
         binLine="00000000000";
         binLine.append(shiftFormat(line));
         binLine.append("000000");
         binLineToHex(binLine);
+        textLength+=8;
     }else if(instruction.compare("slt")==0){
         binLine="000000";
         binLine.append(rFormat(line));
         binLine.append("00000101010");
         binLineToHex(binLine);
+        textLength+=8;
     }else if(instruction.compare("sra")==0){
         binLine="00000000000";
         binLine.append(shiftFormat(line));
         binLine.append("000011");
         binLineToHex(binLine);
+        v
     }else if(instruction.compare("srl")==0){
         binLine="00000000000";
         binLine.append(shiftFormat(line));
         binLine.append("000010");
         binLineToHex(binLine);
+        textLength+=8;
     }else if(instruction.compare("sub")==0){
         binLine="000000";
         binLine.append(rFormat(line));
         binLine.append("00000100010");
         binLineToHex(binLine);
+        textLength+=8;
     }else if(instruction.compare("sw")==0){
         binLine="101011";
         binLine.append(regFormat(line));
@@ -518,11 +543,8 @@ void pfText(){
     outFile<<"00400000"<<endl;
 
     //get length
-    int j=0;
-    int len=instructionLocation*8+20;
-
     outFile << setfill ('0') << std::setw (8); //print the memory address
-    outFile<<hex<<len<<endl;
+    outFile<<hex<<textLength<<endl;
 }
 
 //print the data sectio of the o file
