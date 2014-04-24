@@ -425,23 +425,26 @@ textLength+=8;
 
         string rs=line.substr(0, line.find(','));
         line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
-        string big=line.substr(0, line.find(' ')-1);
+        string big=line.substr(0, line.find(' '));
 
         int j=0;
         int mem;
         while(j<memLocation){
             string s=memStore[j];
-            s=s.substr(1, s.length()-1);
-            if(s.compare(big)){
-                mem=j*4+offsetVal;
+            if(s.length()>0){
+                s=s.substr(1, s.length()-1);
+                if(s.compare(big)==0){
+                    mem=j*4+offsetVal;
+                }
             }
+            j++;
         }
 
         stringstream number;
         number<<hex<<mem;
         string final(number.str());
 
-        string upper=final.substr(0, 3);
+        string upper=final.substr(0, 4);
         string lower=final.substr(4, 7);
 
         int result1 = 0;
@@ -458,10 +461,7 @@ textLength+=8;
         string r2=to_string(result2);
 
         string test1="lui $at, "+r1;
-        string test2="ori ";
-        test2.append(rs);
-        test2.append(",$at ");
-        test2.append(r2);
+        string test2="ori "+rs+", $at, "+r2;
 
         getInstruction(test1);
         getInstruction(test2);
