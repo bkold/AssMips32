@@ -5,6 +5,7 @@
 #include <string>
 #include <iomanip>
 #include <sstream>
+#include <cctype>
 
 //issues at the moment
 
@@ -44,6 +45,7 @@ string decimalToBinary(int decimal) {
   }
   if(decimal==0){
       binary="0000000000000000";
+      return binary;
   }
   while(decimal)  {
       t=1;
@@ -79,9 +81,16 @@ string decimalToBinary(int decimal) {
 
   }else{
         int length=binary.length();
-        while(length<16){
-            binary="0"+binary;
-            length=binary.length();
+        if(length<=16){
+            while(length<16){
+                binary="0"+binary;
+                length=binary.length();
+            }
+        }else{
+            while(length<26){
+                binary="0"+binary;
+                length=binary.length();
+            }
         }
   }
 
@@ -138,7 +147,6 @@ void binLineToHex(string binLine){
     }
     instructionHexStore[instructionHexLocation]=hexLine;
     instructionHexLocation++;
-    cout<<hexLine<<endl; //delete this when done
 }
 
 //prints the structure of the "text", first col is the postion, second is the line, third is the memory address pointer
@@ -287,24 +295,46 @@ string iFormat(string line){
 //for j format
 string jFormat(string line){
         string imm=line.substr(0, line.find(' '));
-        int immed=atoi(imm.c_str());
-        string immb=decimalToBinary(immed);
-        int length=immb.length();
-        if(immb[0]=='0'){
-            while(length<26){
-                immb="0"+immb;
-                length=immb.length();
+        if(isdigit(imm[0])){//used integer
+            int immed=atoi(imm.c_str());
+            string immb=decimalToBinary(immed);
+            int length=immb.length();
+            if(immb[0]=='0'){
+                while(length<26){
+                    immb="0"+immb;
+                    length=immb.length();
+                }
             }
-        }
-        if(immb[0]=='1'){
-            while(length<26){
-                immb="0"+immb;
-                length=immb.length();
+            if(immb[0]=='1'){
+                while(length<26){
+                    immb="1"+immb;
+                    length=immb.length();
+                }
             }
+            return immb;
+        }else{//used branch address
+            int j=0;
+            int mem;
+            while(j<branchLocation){
+                string s=branchStore[j];
+                if(s.length()>0){
+                    s=s.substr(0, s.length()-1);
+                    if(s.compare(imm)==0){
+                        mem=brancMemAdd[j];
+                    }
+                }
+                j++;
+            }
+
+            string immb=decimalToBinary(mem);
+
+            return immb;
+
         }
 
 
-        return immb;
+
+
 }
 
 //for lw and sw and the like
@@ -409,6 +439,7 @@ void getInstruction(string line){
     }else if(instruction.compare("jal")==0){
         binLine="000011";
         binLine.append(jFormat(line));
+        binLineToHex(binLine);
         textLength+=8;
     }else if(instruction.compare("jr")==0){
 //////////this is special must do manually
@@ -447,6 +478,7 @@ textLength+=8;
         string upper=final.substr(0, 4);
         string lower=final.substr(4, 7);
 
+        //hex to dec
         int result1 = 0;
         int pow = 1;
         for ( int i = upper.length() - 1; i >= 0; --i, pow <<= 1 )
@@ -677,6 +709,7 @@ void pfData(){
 void textToMemory(string line){
     int test=line.find(':');
     if(test<0){
+        line=line.substr(0, line.find('#'));
         instructionStore[instructionLocation]=line;
         instructionMemAdd[instructionLocation]=instructionVal+instructionLocation*4;
         instructionLocation++;
