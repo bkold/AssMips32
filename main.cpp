@@ -21,6 +21,8 @@ ifstream inFile;
 ofstream outFile;
 static string memStore[1028];               //var type and name
 static string memValues[1028];              //val value
+static int stringLengths[64];               //string lengths
+static int stringLengthsIndex=0;
 static string instructionStore[1028];       //full instruction line
 static int instructionMemAdd[1028];         //address in memory for an instruction
 static string instructionHexStore[1028];    //full instruction line(hex)
@@ -35,7 +37,7 @@ static int textLength=20;                   //length of
 static const int offsetVal=268500992;       //mem address for the data section
 static const int instructionVal=4194304;    //mem address of the text section
 
-string decimalToBinary(int decimal) {
+string decimalToBinary(int decimal, int isUnsigned) {
   string binary="";
   int isNeg=0;
   int t=0;
@@ -53,7 +55,7 @@ string decimalToBinary(int decimal) {
       decimal >>= 1;
   }
 
-  if(isNeg==1){
+  if(isNeg==1 && isUnsigned!=1){
       int i=0;
       while(i<binary.length()){
           if(binary[i]=='0'){
@@ -275,7 +277,7 @@ string rFormat(string line){
 }
 
 //for i format
-string iFormat(string line){
+string iFormat(string line, int isUnsigned){
         string rs=line.substr(0, line.find(','));
         line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
         string rt=line.substr(0, line.find(','));
@@ -284,9 +286,9 @@ string iFormat(string line){
         string rsb=getRegNum(rs);
         string imm=line.substr(0, line.find(' '));
         int immed=atoi(imm.c_str());
-        string immb=decimalToBinary(immed);
+        string immb=decimalToBinary(immed, isUnsigned);
 
-        string temp=rsb+rtb+immb;
+        string temp=rtb+rsb+immb;
         return temp;
 
 
@@ -297,7 +299,7 @@ string jFormat(string line){
         string imm=line.substr(0, line.find(' '));
         if(isdigit(imm[0])){//used integer
             int immed=atoi(imm.c_str());
-            string immb=decimalToBinary(immed);
+            string immb=decimalToBinary(immed,0);
             int length=immb.length();
             if(immb[0]=='0'){
                 while(length<26){
@@ -326,7 +328,10 @@ string jFormat(string line){
                 j++;
             }
 
-            string immb=decimalToBinary(mem);
+            string immb=decimalToBinary(mem,0);
+
+            immb=immb.substr(0, immb.size()-2);
+            immb="00"+immb;
 
             return immb;
 
@@ -348,7 +353,7 @@ string regFormat(string line){
     int off=atoi(offset.c_str());
     string baseb=getRegNum(base);
     string rtb=getRegNum(rt);
-    string offsetb=decimalToBinary(off);
+    string offsetb=decimalToBinary(off,0);
 
     string temp="";
     //temp=temp+baseb+rtb+offsetb;
@@ -381,6 +386,7 @@ string shiftFormat(string line){
 void getInstruction(string line){
 
     string instruction=line.substr(0, line.find(' '));
+    if(instruction[0]!='-'){
     line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
     string binLine="";
 
@@ -392,7 +398,12 @@ void getInstruction(string line){
         textLength+=8;
     }else if(instruction.compare("addi")==0){
         binLine="001000";
-        binLine.append(iFormat(line));
+        binLine.append(iFormat(line,0));
+        binLineToHex(binLine);
+        textLength+=8;
+    }else if(instruction.compare("addiu")==0){
+        binLine="001001";
+        binLine.append(iFormat(line,1));
         binLineToHex(binLine);
         textLength+=8;
     }else if(instruction.compare("and")==0){
@@ -403,17 +414,17 @@ void getInstruction(string line){
         textLength+=8;
     }else if(instruction.compare("andi")==0){
         binLine="001100";
-        binLine.append(iFormat(line));
+        binLine.append(iFormat(line,0));
         binLineToHex(binLine);
         textLength+=8;
     }else if(instruction.compare("beq")==0){
         binLine="000100";
-        binLine.append(iFormat(line));
+        binLine.append(iFormat(line,0));
         binLineToHex(binLine);
         textLength+=8;
     }else if(instruction.compare("bne")==0){
         binLine="000101";
-        binLine.append(iFormat(line));
+        binLine.append(iFormat(line,0));
         binLineToHex(binLine);
         textLength+=8;
     }else if(instruction.compare("div")==0){
@@ -442,11 +453,10 @@ void getInstruction(string line){
         binLineToHex(binLine);
         textLength+=8;
     }else if(instruction.compare("jr")==0){
-//////////this is special must do manually
-//delete the next line
-binLine="00000000000000000000000000000001";//1
-binLineToHex(binLine);
-textLength+=8;
+        string rs=line.substr(0, line.find(' '));
+        binLine="000000"+getRegNum(rs)+"000000000000000001000";
+        binLineToHex(binLine);
+        textLength+=8;
     }else if(instruction.compare("la")==0){
         //pseudo code instruction
         //la $rs, big--big is the address of the variable
@@ -459,17 +469,32 @@ textLength+=8;
         string big=line.substr(0, line.find(' '));
 
         int j=0;
-        int mem;
+        int mem=0;
+        int i=0;
+        string type;
         while(j<memLocation){
             string s=memStore[j];
             if(s.length()>0){
+                type=s.substr(0,1);
                 s=s.substr(1, s.length()-1);
-                if(s.compare(big)==0){
-                    mem=j*4+offsetVal;
+                if(s.compare(big)!=0){
+                    if(type.compare("W")==0){
+                        mem+=4;
+                    }else if(type.compare("Z")==0){
+                        mem=mem+stringLengths[i];
+                        ++i;
+                    }
+                }else{
+                    j+=memLocation;
                 }
             }
+
             j++;
         }
+        if(type.compare("Z")==0){
+            mem+=2;
+        }
+        mem+=offsetVal;
 
         stringstream number;
         number<<hex<<mem;
@@ -479,18 +504,18 @@ textLength+=8;
         string lower=final.substr(4, 7);
 
         //hex to dec
-        int result1 = 0;
-        int pow = 1;
-        for ( int i = upper.length() - 1; i >= 0; --i, pow <<= 1 )
-            result1 += (upper[i] - '0') * pow;
+        int x;
+        std::stringstream ss;
+        ss << std::hex << upper;
+        ss >> x;
 
-        int result2 = 0;
-        pow = 1;
-        for ( int i = lower.length() - 1; i >= 0; --i, pow <<= 1 )
-            result2 += (lower[i] - '0') * pow;
+        int y;
+        std::stringstream st;
+        st << std::hex << lower;
+        st >> y;
 
-        string r1=to_string(result1);
-        string r2=to_string(result2);
+        string r1=to_string(x);
+        string r2=to_string(y);
 
         string test1="lui $at, "+r1;
         string test2="ori "+rs+", $at, "+r2;
@@ -506,9 +531,16 @@ textLength+=8;
         //else
         //lui $at, upper( imm )
         //ori $rs, $at, lower( imm )
-    binLine="00000000000000000000000000000011";//3
-    binLineToHex(binLine);
-    textLength+=8;
+
+        string rs=line.substr(0, line.find(','));
+        line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
+        string imm=line.substr(0, line.find(' '));
+
+        int testNum=stoi(imm);
+        if(testNum<=32767 && testNum>=-32768){
+            string thing="addiu "+rs+", $0, "+imm;
+            getInstruction(thing);
+        }
     }else if(instruction.compare("lui")==0){
         string rt=line.substr(0, line.find(','));
         line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
@@ -516,7 +548,7 @@ textLength+=8;
 
         string rtb=getRegNum(rt);
         int immed=atoi(imm.c_str());
-        string immb=decimalToBinary(immed);
+        string immb=decimalToBinary(immed,0);
         string temp="";
         temp=rtb+immb;
 
@@ -565,7 +597,7 @@ textLength+=8;
         textLength+=8;
     }else if(instruction.compare("ori")==0){
         binLine="001101";
-        binLine.append(iFormat(line));
+        binLine.append(iFormat(line,0));
         binLineToHex(binLine);
         textLength+=8;
     }else if(instruction.compare("sll")==0){
@@ -604,17 +636,15 @@ textLength+=8;
         binLineToHex(binLine);
         textLength+=8;
     }else if(instruction.compare("syscall")==0){
-//////////this is special must do manually
-        //binLine="000000"+code+"001100";
-//delete the next line
-binLine="00000000000000000000000000001000";//8
-binLineToHex(binLine);
-textLength+=8;
+        binLine="00000000000000000000000000001100";
+        binLineToHex(binLine);
+        textLength+=8;
     }else{
         //error, instruction not supported
         binLine="00000000000000000000000000001001";//9
         binLineToHex(binLine);
         textLength+=8;
+    }
     }
 
 }
@@ -662,15 +692,25 @@ void pfData(){
         if(t=='Z'){
             len=len+2;
         }
+        if(memValues[j].compare("\\0")==0){
+            len=len-2;
+        }
         ++j;
     }
+    len=len+stringLengthsIndex*2;
     outFile << setfill ('0') << std::setw (8);
     outFile<<hex<<len;
     j=0;
+    int e=0;
     while(j<memLocation){
         if(memStore[j].compare("")!=0){
             t=memStore[j][0];
             outFile<<endl;
+            if(t=='Z'){
+                outFile<<setfill('0')<<std::setw(2);
+                outFile<<hex<<stringLengths[e];
+                ++e;
+            }
         }
         if(t=='W'){
             int num = atoi(memValues[j].c_str());
@@ -710,8 +750,17 @@ void textToMemory(string line){
     int test=line.find(':');
     if(test<0){
         line=line.substr(0, line.find('#'));
-        instructionStore[instructionLocation]=line;
-        instructionMemAdd[instructionLocation]=instructionVal+instructionLocation*4;
+        string inst=line.substr(0, line. find(' '));
+        if(inst.compare("la")==0){
+            instructionStore[instructionLocation]=line;
+            instructionMemAdd[instructionLocation]=instructionVal+instructionLocation*4;
+            instructionLocation++;
+            instructionStore[instructionLocation]="---------";
+            instructionHexMemAdd[instructionHexLocation]=instructionVal+instructionHexLocation*4;
+        }else{
+            instructionStore[instructionLocation]=line;
+            instructionMemAdd[instructionLocation]=instructionVal+instructionLocation*4;
+        }
         instructionLocation++;
     }else{
         branchStore[branchLocation]=line;
@@ -738,6 +787,16 @@ void dataToMemory(string line){
     if(type.compare(".asciiz")==0){//array of numbers
         memStore[memLocation]="Z"+varName;
         line=line.substr(1, line.size()-2);
+        int i=0;
+        int size=0;
+        while(i<line.size()){
+            if(line[i]!='\\'){
+                ++size;
+            }
+            ++i;
+        }
+        stringLengths[stringLengthsIndex]=size;
+        ++stringLengthsIndex;
         if(line.size()!=0){
             do{
                 if(line[0]=='\\'){
