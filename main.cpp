@@ -422,6 +422,50 @@ void getInstruction(string line){
         binLine.append(iFormat(line,0));
         binLineToHex(binLine);
         textLength+=8;
+    }else if(instruction.compare("bge")==0){
+        string rt=line.substr(0, line.find(','));
+        line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
+        string rs=line.substr(0, line.find(','));
+        line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
+        string label=line.substr(0, line.find(' ')-1);
+
+        string string1="slt $t0, "+rt+", "+rs;
+        string string2="beq $t0, $0, "+label;
+        getInstruction(string1);
+        getInstruction(string2);
+    }else if(instruction.compare("bgt")==0){
+        string rt=line.substr(0, line.find(','));
+        line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
+        string rs=line.substr(0, line.find(','));
+        line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
+        string label=line.substr(0, line.find(' ')-1);
+
+        string string1="slt $t0, "+rs+", "+rt;
+        string string2="bne $t0, $0, "+label;
+        getInstruction(string1);
+        getInstruction(string2);
+    }else if(instruction.compare("ble")==0){
+        string rt=line.substr(0, line.find(','));
+        line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
+        string rs=line.substr(0, line.find(','));
+        line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
+        string label=line.substr(0, line.find(' ')-1);
+
+        string string1="slt $t0, "+rs+", "+rt;
+        string string2="beq $t0, $0, "+label;
+        getInstruction(string1);
+        getInstruction(string2);
+    }else if(instruction.compare("bgt")==0){
+        string rt=line.substr(0, line.find(','));
+        line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
+        string rs=line.substr(0, line.find(','));
+        line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
+        string label=line.substr(0, line.find(' ')-1);
+
+        string string1="slt $t0, "+rt+", "+rs;
+        string string2="bne $t0, $0, "+label;
+        getInstruction(string1);
+        getInstruction(string2);
     }else if(instruction.compare("bne")==0){
         binLine="000101";
         binLine.append(iFormat(line,0));
@@ -536,10 +580,36 @@ void getInstruction(string line){
         line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
         string imm=line.substr(0, line.find(' '));
 
-        int testNum=stoi(imm);
+        int testNum=atoi(imm.c_str());
         if(testNum<=32767 && testNum>=-32768){
             string thing="addiu "+rs+", $0, "+imm;
             getInstruction(thing);
+        }else{
+            stringstream number;
+            number<<hex<<imm;
+            string final(number.str());
+
+            string upper=final.substr(0, 4);
+            string lower=final.substr(4, 7);
+
+            //hex to dec
+            int x;
+            std::stringstream ss;
+            ss << std::hex << upper;
+            ss >> x;
+
+            int y;
+            std::stringstream st;
+            st << std::hex << lower;
+            st >> y;
+
+            string r1=to_string(x);
+            string r2=to_string(y);
+
+            string string1="lui "+rs+", "+r1;
+            string string2="ori "+rs+", "+r2;
+            getInstruction(string1);
+            getInstruction(string2);
         }
     }else if(instruction.compare("lui")==0){
         string rt=line.substr(0, line.find(','));
@@ -577,6 +647,13 @@ void getInstruction(string line){
         binLine.append("00000010010");
         binLineToHex(binLine);
         textLength+=8;
+    }else if(instruction.compare("move")==0){
+        string rs=line.substr(0, line.find(','));
+        line=line.substr(line.find(' ')+1, line.size()-line.find(' '));
+        string rt=line.substr(0, line.find(' ')-1);
+
+        string string1="add "+rs+", "+rt+", $0";
+        getInstruction(string1);
     }else if(instruction.compare("mul")==0){
         binLine="011100";
         binLine.append(rFormat(line));
@@ -641,7 +718,7 @@ void getInstruction(string line){
         textLength+=8;
     }else{
         //error, instruction not supported
-        binLine="00000000000000000000000000001001";//9
+        binLine="11101110111011101110111011101110";//9
         binLineToHex(binLine);
         textLength+=8;
     }
@@ -751,12 +828,27 @@ void textToMemory(string line){
     if(test<0){
         line=line.substr(0, line.find('#'));
         string inst=line.substr(0, line. find(' '));
-        if(inst.compare("la")==0){
-            instructionStore[instructionLocation]=line;
-            instructionMemAdd[instructionLocation]=instructionVal+instructionLocation*4;
-            instructionLocation++;
-            instructionStore[instructionLocation]="---------";
-            instructionHexMemAdd[instructionHexLocation]=instructionVal+instructionHexLocation*4;
+        if(inst.compare("la")==0 || inst.compare("bge")==0 || inst.compare("ble")==0 || inst.compare("bgt")==0 || inst.compare("blt")==0 || inst.compare("li")==0){
+            int x=0;
+            if(inst.compare("li")==0){
+                //string rs=line.substr(0, line.find(','));
+                string imm=line.substr(line.find(',')+1, line.size()-line.find(' '));
+
+                int testNum=atoi(imm.c_str());
+                if(testNum<=32767 && testNum>=-32768){
+                    x=1;
+                }
+            }
+            if(x==0){
+                instructionStore[instructionLocation]=line;
+                instructionMemAdd[instructionLocation]=instructionVal+instructionLocation*4;
+                instructionLocation++;
+                instructionStore[instructionLocation]="---------";
+                instructionHexMemAdd[instructionHexLocation]=instructionVal+instructionHexLocation*4;
+            }else{
+                instructionStore[instructionLocation]=line;
+                instructionMemAdd[instructionLocation]=instructionVal+instructionLocation*4;
+            }
         }else{
             instructionStore[instructionLocation]=line;
             instructionMemAdd[instructionLocation]=instructionVal+instructionLocation*4;
@@ -850,13 +942,16 @@ int main (int argc, const char *argv[])
 {
     string buff;
     int status=0;
-    char inFileName[256]="foo.s";
+    char inFileName[256];
+    char outFileName[256];
 
-    //printf("Enter the source file name\n");
-    //scanf("%250s", inFileName);
+    printf("Enter the source file name\n");
+    scanf("%250s", inFileName);
+    printf("Enter the destination file name\n");
+    scanf("%250s", outFileName);
 
     inFile.open(inFileName);
-    outFile.open("fooMINE.o");
+    outFile.open(outFileName);
 
     if(inFile.is_open()){
         cout<<"Sourece opened\n";
