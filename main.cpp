@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <sstream>
 #include <cctype>
+#include <algorithm>
 
 //issues at the moment
 
@@ -824,9 +825,27 @@ void pfData(){
 
 //send the text section to an array and the branch tags with appropriate addresses
 void textToMemory(string line){
+    while(line[0]==' ' || line[0]=='\t'){
+        line=line.substr(1,line.size());
+    }
+    replace(line.begin(), line.end(), '\t', ' ');
+    int i=0;
+    while(i<line.size()){
+        int counter=0;
+        int x=i;
+        while(line[x]==' '){
+            ++counter;
+            ++x;
+        }
+        if(counter>0){
+            line.erase(i,counter-1);
+        }
+        ++i;
+    }
     int test=line.find(':');
+    if(line.size()>0){
     if(test<0){
-        line=line.substr(0, line.find('#'));
+        line=line.substr(0, line.find('#')-1);
         string inst=line.substr(0, line. find(' '));
         if(inst.compare("la")==0 || inst.compare("bge")==0 || inst.compare("ble")==0 || inst.compare("bgt")==0 || inst.compare("blt")==0 || inst.compare("li")==0){
             int x=0;
@@ -858,6 +877,7 @@ void textToMemory(string line){
         branchStore[branchLocation]=line;
         brancMemAdd[branchLocation]=instructionLocation*4+instructionVal;
         branchLocation++;
+    }
     }
 }
 
